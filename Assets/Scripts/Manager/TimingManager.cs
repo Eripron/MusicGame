@@ -69,6 +69,7 @@ public class TimingManager : MonoBehaviour
         }
 
         theEffect.JudgementEffect(timingBoxs.Length);
+        theScore.ResetCombo();
     }
 
 

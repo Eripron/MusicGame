@@ -12,11 +12,12 @@ public class NoteManager : MonoBehaviour
 
     TimingManager theTimingManager;
     EffectManager theEffect;
-
+    ScoreManager theScore;
     void Start()
     {
         theTimingManager = GetComponent<TimingManager>();
         theEffect = FindObjectOfType<EffectManager>();
+        theScore = FindObjectOfType<ScoreManager>();
     }
 
     void Update()
@@ -42,7 +43,10 @@ public class NoteManager : MonoBehaviour
         {
             Note note = collision.GetComponent<Note>();
             if(note != null && note.GetNoteFlag())
+            {
                 theEffect.JudgementEffect(4);
+                theScore.ResetCombo();
+            }
 
             theTimingManager.RemoveNoteToList(collision.gameObject);
 
