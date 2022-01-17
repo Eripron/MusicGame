@@ -14,14 +14,18 @@ public class TimingManager : MonoBehaviour
     // perfect, cool, good, bad
     Vector2[] timingBoxs = null;
 
+    // reference
     EffectManager theEffect;
     ScoreManager theScore;
-
+    StageManager theStage;
+    PlayerController thePlayer;
 
     void Start()
     {
         theEffect = FindObjectOfType<EffectManager>();
         theScore = FindObjectOfType<ScoreManager>();
+        theStage = FindObjectOfType<StageManager>();
+        thePlayer = FindObjectOfType<PlayerController>();
 
         timingBoxs = new Vector2[timingRect.Length];
         
@@ -53,16 +57,25 @@ public class TimingManager : MonoBehaviour
                 if (t_notePosX >= timingBoxs[x].x && t_notePosX <= timingBoxs[x].y)
                 {
                     // 이펙트 연출 
-                    theEffect.JudgementEffect(x);
                     if(x < timingBoxs.Length - 1)
                         theEffect.NoteHitEffect();
 
                     // 노트 제거
                     boxNoteList[i].GetComponent<Note>().HideNote();
                     boxNoteList.RemoveAt(i);
+                   
 
-                    // 점수 증가
-                    theScore.IncreaseScore(x);
+                    if(CheckCanNextPlate())
+                    {
+                        theStage.ShowNextPlate();
+                        theScore.IncreaseScore(x);  // 점수 증가
+                        theEffect.JudgementEffect(x);
+                    }
+                    else
+                    {
+                        theEffect.JudgementEffect(5);
+                    }
+
                     return true;
                 }
             }
@@ -73,5 +86,21 @@ public class TimingManager : MonoBehaviour
         return false;
     }
 
+    bool CheckCanNextPlate()
+    {
+        if(Physics.Raycast(thePlayer.Destination, Vector3.down, out RaycastHit hit, 2.0f))
+        {
+            if(hit.transform.CompareTag("BasicPlate"))
+            {
+                BasicPlate t_plate = hit.transform.GetComponent<BasicPlate>();
+                if (t_plate.Flag)
+                {
+                    t_plate.FlagDown();
+                    return true;
+                }
+            }
+        }
 
+        return false;
+    }
 }

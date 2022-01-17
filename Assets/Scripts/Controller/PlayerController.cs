@@ -5,12 +5,20 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     bool canMove = true;
-
+    CameraController cam;
 
     [Header("Move")]
     [SerializeField] float moveSpeed = 3;
     Vector3 dir     = new Vector3();
     Vector3 destPos = new Vector3();
+
+    public Vector3 Destination
+    {
+        get
+        {
+            return destPos;
+        }
+    }
 
     [Header("Rotate")]
     [SerializeField] float spinSpeed = 360;
@@ -28,38 +36,34 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
-        theTimingManager = FindObjectOfType<TimingManager>();     
+        theTimingManager = FindObjectOfType<TimingManager>();
+        cam = FindObjectOfType<CameraController>();
     }
 
 
     void Update()
     {
-        if(Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.S) ||
+        if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.S) ||
             Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.W))
         {
-            if(canMove && theTimingManager.CheckTiming())
+            if (canMove)
             {
-                StartAction();
+                Calc();
+
+                if (theTimingManager.CheckTiming())
+                {
+                    StartAction();
+                }
             }
         }
     }
 
     void StartAction()
     {
-        // 방향 계산
-        dir.Set(Input.GetAxisRaw("Vertical"), 0, Input.GetAxisRaw("Horizontal"));
-        // 이동 목표 값 계산 
-        destPos = transform.position + new Vector3(-dir.x, 0, dir.z);
-
-        // 회전 축 결정 
-        rotDir = new Vector3(-dir.z, 0f, -dir.x);
-        // RotateAround : 축 기준 왼손방향 회전 
-        fakeCube.RotateAround(transform.position, rotDir, spinSpeed);
-        destRot = fakeCube.rotation;
-
         StartCoroutine(MoveCo());
         StartCoroutine(SpinCo());
         StartCoroutine(RecoilCo());
+        StartCoroutine(cam.ZoomCam());
     }
 
 
@@ -77,7 +81,6 @@ public class PlayerController : MonoBehaviour
         transform.position = destPos;
         canMove = true;
     }
-
     IEnumerator SpinCo()
     {
         while(Quaternion.Angle(realCube.rotation, destRot) > 0.5f)
@@ -88,7 +91,6 @@ public class PlayerController : MonoBehaviour
 
         realCube.rotation = destRot;
     }
-
     IEnumerator RecoilCo()
     {
         while(realCube.position.y < recoilPosY)
@@ -105,4 +107,18 @@ public class PlayerController : MonoBehaviour
         realCube.localPosition = Vector3.zero;
     }
 
+
+    void Calc()
+    {
+        // 방향 계산
+        dir.Set(Input.GetAxisRaw("Vertical"), 0, Input.GetAxisRaw("Horizontal"));
+        // 이동 목표 값 계산 
+        destPos = transform.position + new Vector3(-dir.x, 0, dir.z);
+
+        // 회전 축 결정 
+        rotDir = new Vector3(-dir.z, 0f, -dir.x);
+        // RotateAround : 축 기준 왼손방향 회전 
+        fakeCube.RotateAround(transform.position, rotDir, spinSpeed);
+        destRot = fakeCube.rotation;
+    }
 }
