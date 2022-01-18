@@ -10,9 +10,13 @@ public class NoteManager : MonoBehaviour
 
     double currentTime = 0d;
 
+    bool noteActive = true;
+
     TimingManager theTimingManager;
     EffectManager theEffect;
     ScoreManager theScore;
+
+
     void Start()
     {
         theTimingManager = GetComponent<TimingManager>();
@@ -22,6 +26,9 @@ public class NoteManager : MonoBehaviour
 
     void Update()
     {
+        if (!noteActive)
+            return;
+
         currentTime += Time.deltaTime;     
 
         if(currentTime >= 60d / bpm)
@@ -44,6 +51,7 @@ public class NoteManager : MonoBehaviour
             Note note = collision.GetComponent<Note>();
             if(note != null && note.GetNoteFlag())
             {
+                theTimingManager.MissRecord();
                 theEffect.JudgementEffect(4);
                 theScore.ResetCombo();
             }
@@ -53,6 +61,13 @@ public class NoteManager : MonoBehaviour
             ObjectPool.instance.noteQueue.Enqueue(collision.gameObject);
             collision.gameObject.SetActive(false);
         }
+    }
+
+
+    public void RemoveNote()
+    {
+        noteActive = false;
+        theTimingManager.RemoveNote();
     }
 
 }

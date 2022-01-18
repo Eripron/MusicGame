@@ -12,6 +12,7 @@ public class ScoreManager : MonoBehaviour
     int comboBounsScore = 10;
 
     int currentCombo = 0;
+    int maxCombo = 0;
 
     // Á¡¼ö 
     [Header("Score")]
@@ -61,6 +62,9 @@ public class ScoreManager : MonoBehaviour
         currentCombo += p_num;
         txtCombo.text = string.Format("{0:#,##0}", currentCombo);
 
+        if (currentCombo > maxCombo)
+            maxCombo = currentCombo;
+
         if(currentCombo > 2)
         {
             scoreAnim.SetTrigger(COMBO_UP);
@@ -68,12 +72,21 @@ public class ScoreManager : MonoBehaviour
             goComboImage.SetActive(true);
         }
     }
-
+     
     public void ResetCombo()
     {
         currentCombo = 0;
         txtCombo.text = currentCombo.ToString();
         txtCombo.gameObject.SetActive(false);
         goComboImage.SetActive(false);
+    }
+
+    public int GetCurrentScore()
+    {
+        return currentScore;
+    }
+    public int GetMaxCombo()
+    {
+        return maxCombo;
     }
 }

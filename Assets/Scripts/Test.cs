@@ -4,15 +4,26 @@ using UnityEngine;
 
 public class Test : MonoBehaviour
 {
-    [SerializeField] GameObject target;
+    public GameObject target;
 
-    [SerializeField] bool isUp;
+    public float angle;
+    public float radius = 10;
+    public float degreesPerSecond = 30;
 
-    void Update()
+    private void Update()
     {
-        Vector3 dir = isUp ? Vector3.up : Vector3.down;
+        angle += degreesPerSecond * Time.deltaTime;
 
-        transform.RotateAround(target.transform.position, dir, 180 * Time.deltaTime);     
+        if(angle > 360)
+        {
+            angle -= 360;
+        }
+
+        Vector3 orbit = Vector3.forward * radius;
+        orbit = Quaternion.Euler(0, angle, 0) * orbit;
+
+        transform.position = target.transform.position + orbit;
     }
+
 
 }

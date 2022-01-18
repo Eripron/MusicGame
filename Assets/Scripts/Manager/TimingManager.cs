@@ -9,7 +9,7 @@ public class TimingManager : MonoBehaviour
     [SerializeField] Transform Center = null;
     [SerializeField] RectTransform[] timingRect = null;
 
-
+    int[] judgementRecord = new int[5];
 
     // perfect, cool, good, bad
     Vector2[] timingBoxs = null;
@@ -70,6 +70,8 @@ public class TimingManager : MonoBehaviour
                         theStage.ShowNextPlate();
                         theScore.IncreaseScore(x);  // 점수 증가
                         theEffect.JudgementEffect(x);
+
+                        judgementRecord[x]++;       // 판정기록
                     }
                     else
                     {
@@ -83,6 +85,7 @@ public class TimingManager : MonoBehaviour
 
         theEffect.JudgementEffect(timingBoxs.Length);
         theScore.ResetCombo();
+        MissRecord();       // 판정기록
         return false;
     }
 
@@ -102,5 +105,24 @@ public class TimingManager : MonoBehaviour
         }
 
         return false;
+    }
+
+    public void RemoveNote()
+    {
+        for(int i=0; i<boxNoteList.Count; i++)
+        {
+            boxNoteList[i].SetActive(false);
+            ObjectPool.instance.noteQueue.Enqueue(boxNoteList[i]); 
+        }
+    }
+
+    public int[] GetJudgementRecord()
+    {
+        return judgementRecord;
+    }
+
+    public void MissRecord()
+    {
+        judgementRecord[4]++;
     }
 }

@@ -4,13 +4,40 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    bool canMove = true;
+    public static bool isCanPressKey = true;
+
+    // reference
+    TimingManager theTimingManager;
     CameraController cam;
+    Rigidbody rigid;
+
+    // data
+    bool canMove = true;
+    bool isFalling = false;
+
+
+    [SerializeField] LayerMask plateLayer;
+
 
     [Header("Move")]
     [SerializeField] float moveSpeed = 3;
     Vector3 dir     = new Vector3();
     Vector3 destPos = new Vector3();
+    Vector3 originPos = new Vector3();
+
+    [Header("Rotate")]
+    [SerializeField] float spinSpeed = 180;
+    [SerializeField] Transform fakeCube = null;
+    [SerializeField] Transform realCube = null;
+
+    Quaternion destRot  = new Quaternion();
+    Vector3 rotDir      = new Vector3();
+
+
+    [Header("Recoil")]
+    [SerializeField] float recoilPosY = 0.25f;
+    [SerializeField] float recoilSpeed = 1.5f;
+
 
     public Vector3 Destination
     {
@@ -20,33 +47,24 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    [Header("Rotate")]
-    [SerializeField] float spinSpeed = 360;
-    Vector3 rotDir      = new Vector3();
-    Quaternion destRot  = new Quaternion();
-
-    [SerializeField] Transform fakeCube = null;
-    [SerializeField] Transform realCube = null;
-
-    [Header("Recoil")]
-    [SerializeField] float recoilPosY = 0.25f;
-    [SerializeField] float recoilSpeed = 1.5f;
-
-    TimingManager theTimingManager;
 
     void Start()
     {
         theTimingManager = FindObjectOfType<TimingManager>();
         cam = FindObjectOfType<CameraController>();
+        rigid = GetComponentInChildren<Rigidbody>();
+        originPos = transform.position;
     }
 
 
     void Update()
     {
+        CheckFalling();
+
         if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.S) ||
             Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.W))
         {
-            if (canMove)
+            if (canMove && isCanPressKey && !isFalling)
             {
                 Calc();
 
@@ -66,11 +84,8 @@ public class PlayerController : MonoBehaviour
         StartCoroutine(cam.ZoomCam());
     }
 
-
     IEnumerator MoveCo()
     {
-        canMove = false;
-
         // Vector3.Distance 보다 가벼움 
         while (Vector3.SqrMagnitude(transform.position - destPos) >= 0.001f)
         {
@@ -79,17 +94,22 @@ public class PlayerController : MonoBehaviour
         }
 
         transform.position = destPos;
-        canMove = true;
     }
     IEnumerator SpinCo()
     {
-        while(Quaternion.Angle(realCube.rotation, destRot) > 0.5f)
+        canMove = false;
+
+        fakeCube.RotateAround(transform.position, rotDir, spinSpeed);
+        destRot = fakeCube.rotation;
+
+        while (Quaternion.Angle(realCube.rotation, destRot) > 0.1f)
         {
             realCube.rotation = Quaternion.RotateTowards(realCube.rotation, destRot, spinSpeed * Time.deltaTime);
             yield return null;
         }
 
         realCube.rotation = destRot;
+        canMove = true;
     }
     IEnumerator RecoilCo()
     {
@@ -113,12 +133,40 @@ public class PlayerController : MonoBehaviour
         // 방향 계산
         dir.Set(Input.GetAxisRaw("Vertical"), 0, Input.GetAxisRaw("Horizontal"));
         // 이동 목표 값 계산 
-        destPos = transform.position + new Vector3(-dir.x, 0, dir.z);
+        destPos = transform.position + new Vector3(dir.z, 0, dir.x);
 
         // 회전 축 결정 
-        rotDir = new Vector3(-dir.z, 0f, -dir.x);
+        rotDir = new Vector3(-dir.x, 0f, dir.z);
+
         // RotateAround : 축 기준 왼손방향 회전 
-        fakeCube.RotateAround(transform.position, rotDir, spinSpeed);
-        destRot = fakeCube.rotation;
+        //fakeCube.RotateAround(transform.position, rotDir, spinSpeed);
+        //destRot = fakeCube.rotation;
+    }
+
+    void CheckFalling()
+    {
+        if (!isFalling && canMove)
+        {
+            if (!Physics.Raycast(transform.position, Vector3.down, out RaycastHit hitInfo, 1.0f, plateLayer))
+                Falling();
+        }
+    }
+
+    void Falling()
+    {
+        isFalling = true;
+        rigid.useGravity = true;
+        rigid.isKinematic = false;
+    }
+
+
+    public void ResetFalling()
+    {
+        isFalling = false;
+        rigid.useGravity = false;
+        rigid.isKinematic = true;
+
+        transform.position = originPos;
+        realCube.localPosition = new Vector3(0, 0, 0);
     }
 }
